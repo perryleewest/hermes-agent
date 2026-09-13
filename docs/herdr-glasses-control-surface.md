@@ -181,11 +181,37 @@ remote OS, because it only ever runs `herdr` over SSH and never requires the
 remote to be Unix. That is its entire reason to exist. If every Herdr host you
 own can run Hrdle, use Hrdle.
 
-> **Load-bearing assumption, not yet verified with the operator:** that khadas
-> runs Windows 11. That claim comes from a notes file, not from testing, and
-> every architectural choice here rests on it. If khadas runs Linux, Hrdle's
-> peer mesh covers the whole fleet and the Hermes fan-out is redundant for this
-> purpose. Check before building further on it.
+> **Confirmed by the operator (2026-09-13): khadas runs Windows 11.** This was
+> previously an unverified assumption carried over from a notes file; it is now
+> checked. Hrdle therefore cannot run on khadas and khadas cannot be a Hrdle
+> peer, so the Hermes route is the only one that currently reaches every Herdr
+> host in this fleet.
+
+### The shape this leaves, and the one move that would collapse it
+
+With khadas on Windows, the fleet splits:
+
+| Host | OS | Hrdle peer? | Reached by the Hermes route? |
+| --- | --- | --- | --- |
+| mac-mini | macOS arm64 | yes | yes |
+| hetzner | Linux x64 | yes | yes |
+| beelink | Linux x64 | yes | yes |
+| khadas | Windows 11 | **no** | yes |
+
+So Hrdle covers three of four richly, and the Hermes route covers all four
+conversationally. Two glasses surfaces, not one.
+
+The single change that would collapse that split is running khadas's Herdr
+under **WSL2** rather than natively. WSL2 presents as `linux-x64`, which is a
+platform Hrdle installs on, and it would also make khadas a valid SSH target
+for `herdr machine add` and for `herdr-mirror`. Every constraint in this
+document traces back to native Windows, and WSL2 removes the constraint rather
+than working around it.
+
+That is a real migration of a running service, not a config toggle, and the
+vault's no-new-services rule means it needs the operator's sign-off. It is
+untested here. Flagged as the highest-leverage option, not a recommendation to
+act on unprompted.
 
 ### Also in this space
 
