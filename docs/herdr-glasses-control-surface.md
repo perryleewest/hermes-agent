@@ -117,6 +117,23 @@ It just cannot be the thing that unifies khadas with it — which is why the
 merge lives in Hermes, where the transport is only "run this command over SSH"
 and the remote OS stops mattering.
 
+### Optional: also install herdr-gateway
+
+[`steven-terrana/hermes-herdr-plugin`](https://github.com/steven-terrana/hermes-herdr-plugin)
+is a mature Hermes plugin for Herdr with a persistent workstream ledger and
+richer spawning. It targets a single Herdr server, so it cannot be the thing
+that unifies khadas with mac-mini — but it registers `herdr_status`,
+`herdr_spawn`, `herdr_read`, `herdr_relay` and `herdr_focus` into the same
+`herdr` toolset, with no name collisions, so the two coexist:
+
+```bash
+hermes plugins install steven-terrana/hermes-herdr-plugin
+hermes plugins enable herdr-gateway
+```
+
+Because `herdr` is already carried by `hermes-cli` and `hermes-api-server`, its
+tools become always-available too, without further wiring.
+
 ## Part 3 — The glasses
 
 [Hermes Lens](https://github.com/Pb-207/Hermes-Lens) is an Even Hub plugin
@@ -124,6 +141,12 @@ and the remote OS stops mattering.
 phone page holds configuration, and the backend is your own Hermes
 (`/api/sessions/{id}/chat/stream`), so a session continued from the glasses is
 the same session as on the desktop.
+
+Worth stating plainly: there is no Herdr plugin for smart glasses. The Herdr
+ecosystem has phone, browser, and voice front-ends — `awesome-herdr` catalogues
+several — but nothing targeting Even Realities hardware. Hermes Lens is a
+*Hermes* front-end, not a Herdr one, which is exactly why the chain above works:
+it reaches Herdr through Hermes rather than directly.
 
 It is already what is on the Mac mini — the "HERDL"-sounding thing. It needs no
 modification to become a Herdr control surface. Once Part 2 is in place, the

@@ -105,3 +105,39 @@ Agent state is read from `status`, `state`, or a nested `status.state`.
 If Hermes is itself running inside a Herdr pane, `HERDR_PANE_ID` and
 `HERDR_ENV` are stripped from the call environment so the pane's own socket
 cannot silently retarget a call meant for another server.
+
+## Related plugins on GitHub
+
+There is an ecosystem around Herdr, and this plugin is meant to sit alongside
+it rather than replace it.
+
+[`steven-terrana/hermes-herdr-plugin`](https://github.com/steven-terrana/hermes-herdr-plugin)
+("herdr-gateway") is the closest neighbour — a mature Hermes plugin that spawns
+agents into workspaces and tabs, keeps a persistent **workstream ledger**, and
+handles the Hermes-in-Docker / herdr-on-the-host socket bridge:
+
+```bash
+hermes plugins install steven-terrana/hermes-herdr-plugin
+hermes plugins enable herdr-gateway
+```
+
+**The two coexist cleanly.** It registers `herdr_status`, `herdr_spawn`,
+`herdr_read`, `herdr_relay`, and `herdr_focus` into the same `herdr` toolset;
+none of those names collide with ours, and `get_toolset()` unions declared
+tools with registry-registered ones — so installing it adds its tools to every
+toolset that already carries `herdr`. A test covers that.
+
+What it does not do is span machines: its configuration is a single
+`socket_path` / `bridge_tcp` pair, and its client has no SSH or multi-server
+path. If you run one Herdr server, it is the richer choice. If you run several —
+especially with a Windows server in the mix — that is what this plugin is for.
+
+Also worth knowing:
+
+- [`fabzter/herdrbridge`](https://github.com/fabzter/herdrbridge) — stdlib-only
+  Python library for driving agents through Herdr.
+- [`gaijinjoe/herdres`](https://github.com/gaijinjoe/herdres) — a Herdr-to-Hermes
+  integration with a Telegram topic bridge.
+- [`yigitkonur/awesome-herdr`](https://github.com/yigitkonur/awesome-herdr) — the
+  catalogue; its "Voice, hardware, and remote bridges" section lists phone and
+  voice front-ends, though as of this writing nothing there targets smart glasses.

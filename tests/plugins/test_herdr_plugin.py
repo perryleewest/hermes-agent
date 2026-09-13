@@ -508,3 +508,26 @@ def test_check_fn_is_true_with_remote_server_and_ssh(monkeypatch):
     monkeypatch.setenv("HERDR_SERVERS", json.dumps([{"name": "k", "transport": "ssh", "target": "k"}]))
     with patch("shutil.which", side_effect=lambda name: "/usr/bin/ssh" if name == "ssh" else None):
         assert herdr_tools.check_herdr_available() is True
+
+
+def test_third_party_herdr_tools_merge_into_the_toolset():
+    """A community plugin registering into `herdr` must coexist, not collide.
+
+    steven-terrana/hermes-herdr-plugin ("herdr-gateway") registers
+    herdr_status / herdr_spawn / herdr_read / herdr_relay / herdr_focus into
+    this same toolset. None of those names overlap ours, and get_toolset()
+    unions declared tools with registry-registered ones — so installing it
+    adds its tools to the toolsets that already carry `herdr`.
+    """
+    from tools.registry import registry
+    from toolsets import get_toolset
+
+    registry.register(
+        name="herdr_spawn",
+        toolset="herdr",
+        schema={"type": "object", "properties": {}},
+        handler=lambda **kwargs: "{}",
+    )
+    merged = get_toolset("herdr")["tools"]
+    assert "herdr_spawn" in merged
+    assert "herdr_board" in merged  # ours survives the merge
