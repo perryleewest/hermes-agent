@@ -531,3 +531,72 @@ def test_third_party_herdr_tools_merge_into_the_toolset():
     merged = get_toolset("herdr")["tools"]
     assert "herdr_spawn" in merged
     assert "herdr_board" in merged  # ours survives the merge
+
+
+# ---------------------------------------------------------------------------
+# Platform toolset resolution
+#
+# `herdr` ships as a bundled, default-on plugin toolset, which means it must
+# be available without configuration *and* must never widen a toolset list the
+# user set deliberately. These tools drive real terminals on remote machines,
+# so silently reappearing after someone restricted a platform would be a real
+# capability leak, not a cosmetic bug.
+# ---------------------------------------------------------------------------
+
+@pytest.fixture(scope="module")
+def _plugins_loaded():
+    import logging
+
+    from hermes_cli.plugins import discover_plugins
+
+    logging.disable(logging.CRITICAL)
+    try:
+        discover_plugins(force=True)
+        yield
+    finally:
+        logging.disable(logging.NOTSET)
+
+
+def test_herdr_is_registered_as_a_plugin_toolset(_plugins_loaded):
+    from hermes_cli.tools_config import _get_plugin_toolset_keys
+
+    assert "herdr" in _get_plugin_toolset_keys()
+
+
+def test_herdr_is_on_by_default_without_config(_plugins_loaded):
+    """No saved toolset list — herdr should be available out of the box."""
+    from hermes_cli.tools_config import _get_platform_tools
+
+    for platform in ("api_server", "cli"):
+        assert "herdr" in _get_platform_tools({}, platform), platform
+
+
+def test_explicit_toolset_list_is_not_widened_by_herdr(_plugins_loaded):
+    from hermes_cli.tools_config import _get_platform_tools
+
+    config = {"platform_toolsets": {"api_server": ["web", "terminal"]}}
+    enabled = _get_platform_tools(config, "api_server")
+    assert "herdr" not in enabled
+    assert {"web", "terminal"} <= enabled
+
+
+def test_explicit_empty_selection_is_not_widened_by_herdr(_plugins_loaded):
+    """An empty list is a deliberate 'nothing', not 'unconfigured'."""
+    from hermes_cli.tools_config import _get_platform_tools
+
+    enabled = _get_platform_tools({"platform_toolsets": {"cli": []}}, "cli")
+    assert "herdr" not in enabled
+
+
+def test_herdr_is_enabled_when_explicitly_listed(_plugins_loaded):
+    from hermes_cli.tools_config import _get_platform_tools
+
+    config = {"platform_toolsets": {"api_server": ["web", "herdr"]}}
+    assert "herdr" in _get_platform_tools(config, "api_server")
+
+
+def test_herdr_is_user_toggleable(_plugins_loaded):
+    """It must appear in the `hermes tools` checklist, not be forced on."""
+    from hermes_cli.tools_config import CONFIGURABLE_TOOLSETS
+
+    assert "herdr" in {key for key, _label, _desc in CONFIGURABLE_TOOLSETS}

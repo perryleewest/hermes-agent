@@ -83,6 +83,7 @@ CONFIGURABLE_TOOLSETS = [
     ("discord_admin",   "🛡️  Discord Server Admin",    "list channels/roles, pin, assign roles"),
     ("yuanbao",          "🤖 Yuanbao",                  "group info, member queries, DM"),
     ("computer_use",     "🖱️  Computer Use (macOS/Windows/Linux)", "background desktop control via cua-driver"),
+    ("herdr",            "☤ Herdr",                    "list/steer coding agents across every configured Herdr server"),
 ]
 
 
@@ -1422,6 +1423,11 @@ def _get_platform_tools(
     platform_toolsets = config.get("platform_toolsets") or {}
     toolset_names = platform_toolsets.get(platform)
 
+    # True when the user saved an explicit toolset list for this platform,
+    # including a deliberately empty one. Captured before the fallback below
+    # rewrites ``toolset_names`` to the platform default.
+    user_selected_toolsets = isinstance(toolset_names, list)
+
     if toolset_names is None or not isinstance(toolset_names, list):
         plat_info = PLATFORMS.get(platform)
         if plat_info:
@@ -1591,6 +1597,13 @@ def _get_platform_tools(
                 enabled_toolsets.add(pts)
             elif pts in _DEFAULT_OFF_TOOLSETS:
                 # Opt-in plugin toolset — stay off until user picks it
+                continue
+            elif user_selected_toolsets:
+                # The user saved an explicit toolset list for this platform
+                # (possibly empty). Auto-enabling a new bundled plugin here
+                # would silently widen a restriction they set deliberately, so
+                # leave it off until they add it via `hermes tools`. Platforms
+                # with no saved list still get new plugins by default.
                 continue
             elif pts not in known_for_platform:
                 # New plugin not yet seen by hermes tools — default enabled
