@@ -1,8 +1,16 @@
 # Herdr plugin
 
 Lets Hermes drive [Herdr](https://github.com/herdrdev/herdr) — the terminal
-runtime coding agents live in — across **every Herdr server you run, as one
-merged control surface**.
+runtime coding agents live in — across every Herdr server you run, as one merged
+result.
+
+> **Scope note.** This was built to put several Herdr servers on one glasses
+> surface. That is no longer the recommended way to get that: one Herdr server
+> with SSH panes out to the other machines is simpler and needs no LLM in the
+> loop — see `docs/herdr-glasses-control-surface.md`. What this plugin is still
+> for is letting Hermes drive Herdr **at all**: voice and natural-language
+> control, unattended automation and cron, and reaching hosts directly when the
+> machine hosting the single Herdr server is down.
 
 Verified against herdr `0.9.0` (`38bc172`).
 
