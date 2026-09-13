@@ -323,6 +323,19 @@ TOOLSETS = {
         "includes": []
     },
 
+    # Herdr (https://github.com/herdrdev/herdr) — the terminal runtime coding
+    # agents run inside. Herdr already detects Hermes; these tools are the
+    # other direction, and they span every configured Herdr server so several
+    # machines read as one control surface. Provided by plugins/herdr.
+    "herdr": {
+        "description": "Control Herdr across every configured server: list agents, read output, answer approval prompts, start agents",
+        "tools": [
+            "herdr_servers", "herdr_agents", "herdr_control",
+            "herdr_panes", "herdr_board",
+        ],
+        "includes": []
+    },
+
 
     # Scenario-specific toolsets
     
@@ -358,7 +371,7 @@ TOOLSETS = {
             "session_search", "clarify",
             "execute_code", "delegate_task",
         ],
-        "includes": [],
+        "includes": ["herdr"],
         # Posture toolset: selected per-session by agent/coding_context.py,
         # never auto-recovered into per-platform tool config (see the
         # non-configurable-toolset recovery loop in hermes_cli/tools_config.py).
@@ -390,7 +403,7 @@ TOOLSETS = {
             "session_search",
             "execute_code", "delegate_task",
         ],
-        "includes": []
+        "includes": ["herdr"]
     },
 
     "hermes-api-server": {
@@ -423,13 +436,13 @@ TOOLSETS = {
             "ha_list_entities", "ha_get_state", "ha_list_services", "ha_call_service",
 
         ],
-        "includes": []
+        "includes": ["herdr"]
     },
     
     "hermes-cli": {
         "description": "Full interactive CLI toolset - all default tools plus cronjob management",
         "tools": _HERMES_CORE_TOOLS,
-        "includes": []
+        "includes": ["herdr"]
     },
 
     "hermes-cron": {
@@ -440,7 +453,7 @@ TOOLSETS = {
         # the user explicitly enables them.
         "description": "Default cron toolset - same core tools as hermes-cli; gated by `hermes tools`",
         "tools": _HERMES_CORE_TOOLS,
-        "includes": []
+        "includes": ["herdr"]
     },
 
     "hermes-telegram": {

@@ -1,0 +1,11 @@
+name: herdr
+version: 1.0.0
+description: "Control Herdr (https://github.com/herdrdev/herdr) from Hermes — one merged control surface over every Herdr server you run (local, and remote hosts over SSH). Lists agents across machines, reads their output, answers their approval prompts, and starts new ones. Tools gate on a reachable `herdr` binary, so they are always registered but only dispatch where Herdr actually runs."
+author: NousResearch
+kind: backend
+provides_tools:
+  - herdr_servers
+  - herdr_agents
+  - herdr_control
+  - herdr_panes
+  - herdr_board
