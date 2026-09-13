@@ -1,8 +1,16 @@
 # Herdr plugin
 
 Lets Hermes drive [Herdr](https://github.com/herdrdev/herdr) — the terminal
-runtime coding agents live in — across **every Herdr server you run, as one
-merged control surface**.
+runtime coding agents live in — across every Herdr server you run, as one merged
+result.
+
+> **Scope note.** This was built to put several Herdr servers on one glasses
+> surface. That is no longer the recommended way to get that: one Herdr server
+> with SSH panes out to the other machines is simpler and needs no LLM in the
+> loop — see `docs/herdr-glasses-control-surface.md`. What this plugin is still
+> for is letting Hermes drive Herdr **at all**: voice and natural-language
+> control, unattended automation and cron, and reaching hosts directly when the
+> machine hosting the single Herdr server is down.
 
 Verified against herdr `0.9.0` (`38bc172`).
 
@@ -139,5 +147,18 @@ Also worth knowing:
 - [`gaijinjoe/herdres`](https://github.com/gaijinjoe/herdres) — a Herdr-to-Hermes
   integration with a Telegram topic bridge.
 - [`yigitkonur/awesome-herdr`](https://github.com/yigitkonur/awesome-herdr) — the
-  catalogue; its "Voice, hardware, and remote bridges" section lists phone and
-  voice front-ends, though as of this writing nothing there targets smart glasses.
+  catalogue.
+- [`hrdle/hrdle`](https://github.com/hrdle/hrdle) — "Hrdle = herdr + handle".
+  Runs coding agents on a host and puts the controls on a phone and EVEN
+  Realities G2 glasses. Already aggregates several machines itself, as peer
+  servers over Tailscale — but its installer supports only `linux-x64` and
+  `macos-arm64`, so a Windows Herdr host cannot join that mesh. That gap is
+  what this plugin covers: it runs `herdr` over SSH and never requires the
+  remote to be Unix.
+- [`pawaca/even-better`](https://github.com/pawaca/even-better) — mirrors live
+  Herdr agent sessions to G2 glasses over the even-terminal protocol; narrower
+  than Hrdle.
+- [`nikok6/herdr-mirror`](https://github.com/nikok6/herdr-mirror) — mirrors a
+  remote Herdr server into the local sidebar over SSH. Another route to one
+  surface over several machines, though its documented install targets are macOS
+  and Linux and it does not state whether a Windows remote is supported.
