@@ -142,11 +142,42 @@ phone page holds configuration, and the backend is your own Hermes
 (`/api/sessions/{id}/chat/stream`), so a session continued from the glasses is
 the same session as on the desktop.
 
-Worth stating plainly: there is no Herdr plugin for smart glasses. The Herdr
-ecosystem has phone, browser, and voice front-ends — `awesome-herdr` catalogues
-several — but nothing targeting Even Realities hardware. Hermes Lens is a
-*Hermes* front-end, not a Herdr one, which is exactly why the chain above works:
-it reaches Herdr through Hermes rather than directly.
+A correction to an earlier revision of this document, which claimed no Herdr
+plugin for smart glasses existed. That was wrong, and it was wrong because the
+catalogue search behind it was truncated rather than absent.
+
+[`pawaca/even-better`](https://github.com/pawaca/even-better) mirrors live Herdr
+agent sessions to Even Realities G2 glasses over the even-terminal-compatible
+protocol. Even Realities also ships an official
+[Terminal Mode](https://www.evenrealities.com/terminal) for G2: enable it in the
+phone app, scan a QR the CLI prints, and the host streams to the glasses.
+
+So there are two distinct routes to the glasses, and they are complementary:
+
+| Route | Reaches | Good for |
+| --- | --- | --- |
+| Herdr -> `even-better` -> G2 | the Herdr server on that host | watching panes, direct terminal control |
+| Hermes Lens -> Hermes -> Herdr | every configured Herdr server | asking in natural language, spanning machines |
+
+The Hermes route is the one this document sets up, and its distinguishing
+property is that it spans machines regardless of their OS. The direct route is
+lower-latency and needs no LLM in the loop, but a given glasses plugin serves
+the Herdr instance on its own host.
+
+### Mirroring one Herdr server into another
+
+[`nikok6/herdr-mirror`](https://github.com/nikok6/herdr-mirror) is worth knowing
+about here. It mirrors a remote Herdr server's workspaces and agents into the
+local sidebar over SSH, so one Herdr window shows the agents on every machine.
+Combined with a glasses plugin on that host, it is a second way to get two
+servers onto one surface -- without Hermes in the path at all.
+
+The open question for this setup is the same one that rules out
+`herdr machine add`: its documented install targets are macOS and Linux, and it
+does not state whether a **Windows** host works as a mirrored remote. khadas is
+Windows 11. Until that is tested on the real machines, the Hermes route is the
+one known to be OS-agnostic, because it only ever runs `herdr` over SSH and
+never asks the remote to be Unix.
 
 It is already what is on the Mac mini — the "HERDL"-sounding thing. It needs no
 modification to become a Herdr control surface. Once Part 2 is in place, the

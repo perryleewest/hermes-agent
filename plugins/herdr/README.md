@@ -139,5 +139,11 @@ Also worth knowing:
 - [`gaijinjoe/herdres`](https://github.com/gaijinjoe/herdres) — a Herdr-to-Hermes
   integration with a Telegram topic bridge.
 - [`yigitkonur/awesome-herdr`](https://github.com/yigitkonur/awesome-herdr) — the
-  catalogue; its "Voice, hardware, and remote bridges" section lists phone and
-  voice front-ends, though as of this writing nothing there targets smart glasses.
+  catalogue.
+- [`pawaca/even-better`](https://github.com/pawaca/even-better) — mirrors live
+  Herdr agent sessions to Even Realities G2 glasses. Serves the Herdr instance on
+  its own host; this plugin is the path that spans several hosts.
+- [`nikok6/herdr-mirror`](https://github.com/nikok6/herdr-mirror) — mirrors a
+  remote Herdr server into the local sidebar over SSH. Another route to one
+  surface over several machines, though its documented install targets are macOS
+  and Linux and it does not state whether a Windows remote is supported.
