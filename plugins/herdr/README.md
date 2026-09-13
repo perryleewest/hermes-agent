@@ -140,9 +140,16 @@ Also worth knowing:
   integration with a Telegram topic bridge.
 - [`yigitkonur/awesome-herdr`](https://github.com/yigitkonur/awesome-herdr) — the
   catalogue.
+- [`hrdle/hrdle`](https://github.com/hrdle/hrdle) — "Hrdle = herdr + handle".
+  Runs coding agents on a host and puts the controls on a phone and EVEN
+  Realities G2 glasses. Already aggregates several machines itself, as peer
+  servers over Tailscale — but its installer supports only `linux-x64` and
+  `macos-arm64`, so a Windows Herdr host cannot join that mesh. That gap is
+  what this plugin covers: it runs `herdr` over SSH and never requires the
+  remote to be Unix.
 - [`pawaca/even-better`](https://github.com/pawaca/even-better) — mirrors live
-  Herdr agent sessions to Even Realities G2 glasses. Serves the Herdr instance on
-  its own host; this plugin is the path that spans several hosts.
+  Herdr agent sessions to G2 glasses over the even-terminal protocol; narrower
+  than Hrdle.
 - [`nikok6/herdr-mirror`](https://github.com/nikok6/herdr-mirror) — mirrors a
   remote Herdr server into the local sidebar over SSH. Another route to one
   surface over several machines, though its documented install targets are macOS
