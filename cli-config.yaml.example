@@ -953,6 +953,43 @@ code_execution:
   max_tool_calls: 50   # Max RPC tool calls per execution (default: 50)
 
 # =============================================================================
+# Herdr
+# =============================================================================
+# Herdr (https://github.com/herdrdev/herdr) is the terminal runtime coding
+# agents run inside. The bundled `plugins/herdr` tools drive every server
+# listed here as one merged control surface -- `herdr_agents(action="list")`
+# returns agents from all of them, each tagged with the server it came from.
+#
+# Omit this block entirely to use a single implicit local server.
+#
+# Why list remote servers here rather than using Herdr's own `machine add`:
+# Herdr supports multi-machine connections from Linux/macOS clients to
+# Linux/macOS servers, and does not support native Windows servers as SSH
+# targets. Running the remote `herdr` CLI over SSH works regardless of OS.
+#
+# See docs/herdr-glasses-control-surface.md for the full setup.
+# herdr:
+#   servers:
+#     - name: local              # How you refer to it in tool calls
+#       transport: local         # local | ssh (defaults to ssh when target is set)
+#
+#     - name: mac-mini
+#       label: mac               # Display name used by herdr_board
+#       transport: ssh
+#       target: perry@mac-mini   # SSH destination; auth stays with OpenSSH
+#       # bin: /opt/homebrew/bin/herdr   # Path to herdr on that host (default: herdr)
+#       # ssh_options: ["Port=2222"]     # Extra `ssh -o` values
+#       # timeout: 45                    # Seconds per call (default: 45 remote, 20 local)
+#
+#     - name: khadas
+#       transport: ssh
+#       target: perry-lee@khadas
+#       shell_quoting: windows   # REQUIRED for Windows targets: Windows OpenSSH
+#                                # runs commands through cmd.exe, where POSIX
+#                                # single quotes are literal characters.
+#       # enabled: false         # Keep the profile without connecting
+
+# =============================================================================
 # Subagent Delegation
 # =============================================================================
 # The delegate_task tool spawns child agents with isolated context.
