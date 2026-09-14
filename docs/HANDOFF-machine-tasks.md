@@ -1,6 +1,8 @@
 # Handoff: tasks that need a session with machine access
 
 **Written** 2026-09-14 by a Claude Code session running in Anthropic's cloud.
+**Revised** 2026-09-14, same session, after a full sweep of the repositories it
+could reach. See "Open pull requests" and Task 6 below for what that added.
 **For** a Claude Code session running on one of Perry's own machines.
 
 That cloud session could reach GitHub but had **no network route to khadas,
@@ -192,6 +194,67 @@ hermes plugins install perryleewest/hermes-agent/plugins/herdr --enable
 
 ---
 
+## Open pull requests - Perry's to review, not yours to merge
+
+Ten draft PRs were opened from the cloud session. **Do not merge them** - they
+are Perry's call. They are listed here only so you do not redo the work or get
+confused by a branch that already exists.
+
+All ten are on branch `claude/hermes-herdr-glasses-integration-73diw0` in their
+own repositories, all in sync with their remotes.
+
+Three repositories had **no context file at all**, so any agent opening them
+started from the source with no orientation. Each got one written from the
+repository's own contents:
+
+| Repo | PR |
+|---|---|
+| `fleet-ops` | #1 |
+| `hub-rs` | #1 |
+| `agent-dispatch` | #12 |
+
+Seven had a good context file under **one name only** - `CLAUDE.md`, which only
+Claude Code reads. Hermes, codex, opencode and crush look for `AGENTS.md`,
+found nothing, and arrived blind at repositories Claude knew well. Each got a
+byte-identical `AGENTS.md`:
+
+`context-engine` #2 - `commands` #2 - `anthropic-bridge` #3 -
+`agent-telemetry` #2 - `comms-vault-sync` #2 - `claude-memory-mycelium` #2 -
+`amp-spec` #4
+
+Only two of those repositories run CI. Both are green. `agent-dispatch` was red
+**before** the branch existed, on two dependency advisories in a `Cargo.lock`
+identical to `main`'s: RUSTSEC-2026-0190 (unsoundness in `anyhow`'s
+`Error::downcast_mut()`) and a yanked `chacha20 0.10.0` pulled in transitively
+through `async-nats`. Fixed in that PR by a targeted
+`cargo update -p anyhow -p chacha20` - lockfile only, no API change, full gate
+run passing locally on the pinned 1.96.0 toolchain.
+
+**If you keep these files, keep both names identical.** When either changes,
+change both. That is the entire point of the pair.
+
+---
+
+## Task 6 - Two repository decisions only Perry can make
+
+Neither is urgent. Both need his answer before anyone acts.
+
+**`hermes-agent` has `AGENTS.md` but no `CLAUDE.md`.** So a Claude Code session
+opening the Hermes fork gets nothing, which is the same failure as the seven
+repos above, mirrored. The fix is a small pointer file. The cloud session did
+**not** do it: the only branch it was allowed to push there already carried the
+Herdr plugin PR, and dropping an unrelated docs file into that PR would muddy
+it. If Perry wants it, it is a two-minute change on its own branch.
+
+**`hermes-cli-agent` is an empty repository.** It has exactly one commit -
+*"Initial commit: hermes-agent repo split from home monorepo"* - and that commit
+contains **zero files**. The split was started and nothing was ever moved. It is
+one of five empty repos on the account (`orchestrator`, `coordinator`,
+`grok-agent`, `kimi-agent`, `hermes-cli-agent`). Either finish the split or
+delete the repo; it does nothing as it stands.
+
+---
+
 ## Reference
 
 - Full architecture: `docs/herdr-glasses-control-surface.md` in this repo
@@ -207,3 +270,4 @@ Tell Perry, in plain language:
    whole single-Herdr design works or whether WSL2 is needed.
 2. Anything you changed on his machines.
 3. Anything that broke.
+4. His answer on Task 6, if he gives you one.
