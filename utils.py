@@ -43,7 +43,7 @@ def _preserve_file_mode(path: Path) -> "int | None":
         return None
 
 
-def _restore_file_mode(path: Path, mode: "int | None") -> None:
+def _restore_file_mode(path: Union[str, Path], mode: "int | None") -> None:
     """Re-apply *mode* to *path* after an atomic replace.
 
     ``tempfile.mkstemp`` creates files with 0o600 (owner-only).  After
@@ -166,7 +166,7 @@ def atomic_json_write(
             except OSError:
                 pass
         else:
-            _restore_file_mode(Path(real_path), original_mode)
+            _restore_file_mode(real_path, original_mode)
     except BaseException:
         # Intentionally catch BaseException so temp-file cleanup still runs for
         # KeyboardInterrupt/SystemExit before re-raising the original signal.
