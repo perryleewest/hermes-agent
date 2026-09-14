@@ -90,12 +90,31 @@ a single point of failure by design, not by accident.
 (ConPTY) can redraw badly or mishandle keys. macOS and Linux panes will be
 clean. Test the khadas pane specifically before relying on it.
 
+**macOS's own `ssh` may break the status indicator -- REPORTED, NOT YET
+CONFIRMED.** A session testing this design against beelink on 2026-09-14
+reported that the mac-mini's native `ssh` blocked the Herdr status light, and
+that wrapping the call in a small Python wrapper fixed it -- along with a
+`claude` path problem in the same pane. On that report the pane worked and the
+indicator came back.
+
+Recorded here because it directly contradicts the "just run `ssh`" instruction
+above, and the session that found it was archived before the detail could be
+pinned down. **Two things are still unknown:** whether native `ssh` produced no
+indicator at all or a stuck one, and what specifically the wrapper changed --
+PTY allocation, environment, or the `claude` path alone. Until someone answers
+those, treat the plain `ssh` command in this document as the *intended* design
+rather than a verified one, and expect to need a wrapper on macOS.
+
+If you confirm or refute this, correct this section and say which it was.
+
 ## Setup
 
 1. Confirm `ssh khadas`, `ssh hetzner`, `ssh beelink` all work from the mac-mini
    non-interactively (key auth, no password prompt).
 2. In Hrdle, open a pane and run the `HERDR_AGENT=... ssh ...` command for one
-   host. Confirm the pane gets a status indicator.
+   host. Confirm the pane gets a status indicator. **If it does not, that is the
+   reported macOS `ssh` problem above, not a mistake on your part** -- try the
+   Python wrapper route before assuming the design is wrong.
 3. Check the glasses show that session with its indicator.
 4. Repeat per host. Give the sessions colours (long-press) so they are
    distinguishable at a glance on the lenses.
