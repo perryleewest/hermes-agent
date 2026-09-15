@@ -108,8 +108,14 @@ def test_opencode_go_totally_unknown_model_still_accepted():
 
 @_patched
 def test_opencode_zen_known_model_accepted():
-    """opencode-zen also uses _PROVIDER_MODELS; kimi-k2 is in its catalog."""
-    result = validate_requested_model("kimi-k2", "opencode-zen")
+    """opencode-zen also uses _PROVIDER_MODELS; kimi-k2.6 is in its catalog.
+
+    Kept in step with the opencode-go cases above — both catalogs carry
+    kimi-k2.5 / kimi-k2.6. This case still named the long-removed bare
+    ``kimi-k2`` after that bump, so it was asserting on a model no catalog
+    has contained for some time.
+    """
+    result = validate_requested_model("kimi-k2.6", "opencode-zen")
     assert result["accepted"] is True
     assert result["recognized"] is True
 
