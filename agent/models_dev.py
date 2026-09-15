@@ -8,11 +8,25 @@ of 4000+ models across 109+ providers.  Provides:
   (reasoning, tools, vision, PDF, audio), modalities, knowledge cutoff,
   open-weights flag, family grouping, deprecation status
 
-Data resolution order (like TypeScript OpenCode):
-  1. Bundled snapshot (ships with the package — offline-first)
-  2. Disk cache (~/.hermes/models_dev_cache.json)
-  3. Network fetch (https://models.dev/api.json)
-  4. Background refresh every 60 minutes
+Data resolution order — see ``fetch_models_dev`` for the authoritative version:
+  1. In-memory cache, if younger than 60 minutes
+  2. Disk cache (~/.hermes/models_dev_cache.json), if younger than 60 minutes
+  3. Network fetch (https://models.dev/api.json), 15 s timeout
+  4. On network failure, any disk cache at all — even stale — held for 5 min
+     before the next network attempt
+
+**This module is not offline-first.** There is no bundled snapshot, and
+refreshes are lazy — they happen on the next call past the TTL, not on a
+background timer. With no disk cache and no network, every query function
+here returns ``None`` or ``{}``. Callers must treat that as *unknown*, not
+as *unsupported*: see ``agent.image_routing._lookup_supports_vision``, which
+deliberately answers ``None`` so new and self-hosted models are attempted
+rather than blocked.
+
+That distinction matters for tests. Anything asserting on a real capability
+value needs to supply it (patch ``get_model_capabilities``) rather than let
+the lookup run, or it silently becomes a network test that inverts its own
+assertions on an air-gapped machine.
 
 Other modules should import the dataclasses and query functions from here
 rather than parsing the raw JSON themselves.
