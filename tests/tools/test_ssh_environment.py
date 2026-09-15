@@ -37,6 +37,16 @@ class TestBuildSSHCommand:
 
     @pytest.fixture(autouse=True)
     def _mock_connection(self, monkeypatch):
+        # These cases assemble an argv / socket path and never launch ssh —
+        # the mocks below already stand in for the connection. But
+        # SSHEnvironment.__init__ calls _ensure_ssh_available(), which does a
+        # real shutil.which("ssh"), so constructing one still raised
+        # "SSH is not installed or not in PATH" on any machine without an
+        # OpenSSH client (a container, a slim CI image). Stub the lookup too,
+        # so what is under test is the argument building, not the runner's
+        # installed packages.
+        monkeypatch.setattr("tools.environments.ssh.shutil.which",
+                            lambda name: f"/usr/bin/{name}")
         monkeypatch.setattr("tools.environments.ssh.subprocess.run",
                             lambda *a, **k: subprocess.CompletedProcess([], 0))
         monkeypatch.setattr("tools.environments.ssh.subprocess.Popen",
@@ -79,6 +89,16 @@ class TestControlSocketPath:
 
     @pytest.fixture(autouse=True)
     def _mock_connection(self, monkeypatch):
+        # These cases assemble an argv / socket path and never launch ssh —
+        # the mocks below already stand in for the connection. But
+        # SSHEnvironment.__init__ calls _ensure_ssh_available(), which does a
+        # real shutil.which("ssh"), so constructing one still raised
+        # "SSH is not installed or not in PATH" on any machine without an
+        # OpenSSH client (a container, a slim CI image). Stub the lookup too,
+        # so what is under test is the argument building, not the runner's
+        # installed packages.
+        monkeypatch.setattr("tools.environments.ssh.shutil.which",
+                            lambda name: f"/usr/bin/{name}")
         monkeypatch.setattr("tools.environments.ssh.subprocess.run",
                             lambda *a, **k: subprocess.CompletedProcess([], 0))
         monkeypatch.setattr("tools.environments.ssh.subprocess.Popen",
