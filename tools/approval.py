@@ -609,6 +609,25 @@ _PATH_TOKEN_STOP = r"""\s'"`;|&<>()"""
 # One path segment (no separators, no terminators) preceded by a separator.
 _PATH_TAIL = r"(?P<tail>(?:[/\\][^/\\" + _PATH_TOKEN_STOP + r"]*)+)"
 
+# Single-component paths that are one account's *own* home rather than a
+# directory holding other accounts' homes. The component count check below
+# exists to stop a shallow HOME (``/``, ``/home``, ``/Users``, ``C:\``) from
+# rewriting unrelated filesystem prefixes — but it also rejects ``/root``,
+# which the FHS reserves for the root account and is not a parent of anyone
+# else's home.
+#
+# That mattered: Hermes explicitly supports running as root in containers
+# (``hermes gateway install --run-as-user root``, "fine for LXC/container
+# environments"), and the official Dockerfile's final stage is ``USER root``.
+# In that deployment HOME is ``/root``, the fold was skipped entirely, and the
+# absolute-path form of every user-sensitive pattern stopped being checked —
+# ``cat key >> /root/.ssh/authorized_keys`` was auto-approved while
+# ``cat key >> ~/.ssh/authorized_keys`` was gated.
+#
+# Folding here cannot over-match: this path is only ever consulted when it is
+# the resolved home of the *current* process, so ``/root/x`` really is ``~/x``.
+_SINGLE_COMPONENT_HOMES = frozenset({"root"})
+
 
 @functools.lru_cache(maxsize=64)
 def _home_prefix_fold_regex(path: str):
@@ -623,18 +642,22 @@ def _home_prefix_fold_regex(path: str):
     required (``+``), so a bare home with no path under it is not folded.
 
     Returns ``None`` for an unset or degenerate path — one with fewer than two
-    components below the root — so a stray HOME / HERMES_HOME such as ``/``,
-    ``C:\\`` or ``""`` cannot rewrite unrelated filesystem prefixes. Cached
-    because the resolved home is stable across calls on this hot path.
+    components below the root, unless it is a known single-component home such
+    as ``/root`` — so a stray HOME / HERMES_HOME such as ``/``, ``C:\\`` or
+    ``""`` cannot rewrite unrelated filesystem prefixes. Cached because the
+    resolved home is stable across calls on this hot path.
     """
     if not path:
         return None
     components = [c for c in re.split(r"[/\\]+", path) if c]
+    if not components:
+        return None
     # Require at least two non-empty components below the root. For POSIX this
     # mirrors the historical ``count("/") >= 2`` guard (``/home/alice`` folds,
     # ``/home`` does not); for Windows it rejects a bare drive root (``C:\\``)
-    # while accepting a real home (``C:\\Users\\alice``).
-    if len(components) < 2:
+    # while accepting a real home (``C:\\Users\\alice``). ``/root`` is the
+    # documented exception — see _SINGLE_COMPONENT_HOMES.
+    if len(components) < 2 and components[0] not in _SINGLE_COMPONENT_HOMES:
         return None
     body = r"[/\\]+".join(re.escape(c) for c in components)
     # Optional leading root separator (POSIX ``/`` or UNC ``\\``); a Windows

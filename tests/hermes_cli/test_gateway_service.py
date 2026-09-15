@@ -18,6 +18,51 @@ from gateway.restart import (
 )
 
 
+@pytest.fixture
+def pinned_service_identity(monkeypatch):
+    """Pin the system-service identity instead of inheriting the runner's.
+
+    With no explicit user, ``_system_service_identity`` falls back to
+    SUDO_USER / USER / LOGNAME / ``getpass.getuser()`` — and refuses outright
+    when that resolves to root. Tests covering unit-file generation and
+    service routing care about neither, but inherited it anyway, so they
+    passed as a normal user and raised "Refusing to install the gateway
+    system service as root" in any root context: a Docker or LXC container,
+    or CI running as root.
+
+    Several tests in this file already pin the identity inline with exactly
+    this triple; this is the same thing, applied to the classes that need it
+    throughout. ``TestSystemServiceIdentityRootHandling`` deliberately does
+    not use it — resolving that identity is the thing it tests.
+    """
+    monkeypatch.setattr(
+        gateway_cli,
+        "_system_service_identity",
+        lambda run_as_user=None: ("alice", "alice", "/home/alice"),
+    )
+
+
+@pytest.fixture
+def stubbed_user_systemd_preflight(monkeypatch):
+    """Skip the live user-D-Bus check at the top of systemd_start/restart.
+
+    Both call `_preflight_user_systemd()` before doing anything, which probes
+    for a reachable `systemctl --user` session and raises:
+
+        UserSystemdUnavailableError: Linger was enabled, but the user D-Bus
+        socket did not appear.
+
+    The tests below mock `subprocess.run` and the unit path outright and then
+    assert on the exact systemctl argv — they never intend to reach a real
+    systemd, and a container has no user D-Bus session for them to reach.
+    Stubbing the preflight costs no coverage: `TestPreflightUserSystemd` is
+    the class that tests it, and does so directly.
+    """
+    monkeypatch.setattr(
+        gateway_cli, "_preflight_user_systemd", lambda **kwargs: None
+    )
+
+
 class TestUserSystemdPrivateSocketPreflight:
     def test_preflight_accepts_private_socket_without_dbus_bus(self, monkeypatch):
         monkeypatch.setattr(gateway_cli, "_ensure_user_systemd_env", lambda: None)
@@ -39,6 +84,10 @@ class TestUserSystemdPrivateSocketPreflight:
 
 
 class TestSystemdServiceRefresh:
+    @pytest.fixture(autouse=True)
+    def _pin_identity(self, pinned_service_identity, stubbed_user_systemd_preflight):
+        """See those fixtures — keeps these cases host-independent."""
+
     def test_systemd_install_repairs_outdated_unit_without_force(self, tmp_path, monkeypatch):
         unit_path = tmp_path / "hermes-gateway.service"
         unit_path.write_text("old unit\n", encoding="utf-8")
@@ -411,6 +460,10 @@ class TestRequireServiceInstalled:
 
 
 class TestGeneratedSystemdUnits:
+    @pytest.fixture(autouse=True)
+    def _pin_identity(self, pinned_service_identity):
+        """See pinned_service_identity — keeps these cases root-independent."""
+
     def _expected_timeout_stop_sec(self) -> str:
         timeout = int(max(60, DEFAULT_GATEWAY_RESTART_DRAIN_TIMEOUT) + 30)
         return f"TimeoutStopSec={timeout}"
@@ -1481,6 +1534,10 @@ class TestGatewayServiceDetection:
         assert gateway_cli._is_service_running() is False
 
 class TestGatewaySystemServiceRouting:
+    @pytest.fixture(autouse=True)
+    def _pin_identity(self, pinned_service_identity, stubbed_user_systemd_preflight):
+        """See those fixtures — keeps these cases host-independent."""
+
     def test_systemd_restart_gracefully_restarts_running_service_and_waits(self, monkeypatch, capsys):
         calls = []
 
@@ -2038,6 +2095,10 @@ class TestGeneratedUnitUsesDetectedVenv:
 
 class TestGeneratedUnitIncludesLocalBin:
     """~/.local/bin must be in PATH so uvx/pipx tools are discoverable."""
+    @pytest.fixture(autouse=True)
+    def _pin_identity(self, pinned_service_identity):
+        """See pinned_service_identity — keeps these cases root-independent."""
+
 
     def test_user_unit_includes_local_bin_in_path(self, monkeypatch):
         home = Path.home()

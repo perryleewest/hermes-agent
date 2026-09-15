@@ -372,6 +372,13 @@ _LABEL_OVERRIDES: Dict[str, str] = {
     "local": "Local endpoint",
     "bedrock": "AWS Bedrock",
     "ollama-cloud": "Ollama Cloud",
+    # "xAI" is already the canonical spelling in hermes_cli/models.py's
+    # ProviderEntry table and in auth.py, but get_label() is the one lookup
+    # that reaches models.dev for it. That made the picker render "xai"
+    # whenever models.dev was unreachable (offline, air-gapped, first run
+    # before any cache) while every other surface said "xAI". Pinning it here
+    # keeps the display name deterministic and agreeing with its siblings.
+    "xai": "xAI",
     "xai-oauth": "xAI Grok OAuth (SuperGrok / Premium+)",
 }
 

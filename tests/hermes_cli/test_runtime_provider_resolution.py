@@ -7,6 +7,27 @@ import pytest
 from hermes_cli import runtime_provider as rp
 
 
+class _EmptyPool:
+    """A credential pool holding nothing.
+
+    ``resolve_runtime_provider`` consults ``load_pool`` before the per-provider
+    credential resolvers, so a test that patches only a resolver still reaches
+    the real pool — which reads the live ``~/.hermes`` of whoever runs the
+    suite. That made two tests below assert against whatever credentials the
+    machine happened to have installed: they passed on a clean checkout and
+    failed on any box with real Qwen credentials, and a pooled token was being
+    read out of a developer's own auth store to do it.
+
+    Tests that mean "no pooled credentials" patch ``load_pool`` with this.
+    """
+
+    def has_credentials(self):
+        return False
+
+    def select(self):
+        return None
+
+
 def _fake_invoke_jwt(ttl_seconds=3600):
     header = base64.urlsafe_b64encode(b'{"alg":"none","typ":"JWT"}').decode().rstrip("=")
     payload = base64.urlsafe_b64encode(
@@ -231,6 +252,7 @@ def test_resolve_runtime_provider_codex(monkeypatch):
 
 def test_resolve_runtime_provider_qwen_oauth(monkeypatch):
     monkeypatch.setattr(rp, "resolve_provider", lambda *a, **k: "qwen-oauth")
+    monkeypatch.setattr(rp, "load_pool", lambda provider: _EmptyPool())
     monkeypatch.setattr(
         rp,
         "resolve_qwen_runtime_credentials",
@@ -291,6 +313,7 @@ def test_qwen_oauth_auto_fallthrough_on_auth_failure(monkeypatch):
     from hermes_cli.auth import AuthError
 
     monkeypatch.setattr(rp, "resolve_provider", lambda *a, **k: "qwen-oauth")
+    monkeypatch.setattr(rp, "load_pool", lambda provider: _EmptyPool())
     monkeypatch.setattr(
         rp,
         "resolve_qwen_runtime_credentials",

@@ -134,6 +134,24 @@ class TestAbiStamp:
         ro_parent.mkdir()
         os.chmod(ro_parent, 0o500)
         try:
+            # chmod 0500 denies nothing to root, so under a root container the
+            # parent stays writable, `_ensure_target_ready` succeeds, and this
+            # asserts against a scenario that was never built. Check the
+            # premise instead of assuming it — a precondition, not a
+            # quarantine: anywhere permissions are enforced this runs as
+            # before.
+            probe = ro_parent / ".write-probe"
+            try:
+                probe.touch()
+            except OSError:
+                pass  # the lock took — this is the scenario we want
+            else:
+                probe.unlink()
+                pytest.skip(
+                    "chmod 0500 does not deny this process (running as uid "
+                    f"{os.geteuid()}), so a non-writable parent cannot be built"
+                )
+
             err = ld._ensure_target_ready(ro_parent / "lazy")
             assert err is not None
             assert "not writable" in err

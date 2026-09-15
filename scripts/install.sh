@@ -1041,8 +1041,12 @@ install_system_packages() {
         desc_parts+=("ffmpeg for TTS voice messages")
         pkgs+=("ffmpeg")
     fi
+    # NB: `IFS=" and "` does NOT join with the string " and " — IFS is a set of
+    # single delimiter characters, and "${arr[*]}" joins using only its FIRST
+    # one (here, a space). That silently dropped the "and" from the prompt.
     local description
-    description=$(IFS=" and "; echo "${desc_parts[*]}")
+    description=$(printf '%s and ' "${desc_parts[@]}")
+    description=${description% and }
 
     # ── macOS: brew ──
     if [ "$OS" = "macos" ]; then

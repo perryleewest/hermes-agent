@@ -69,6 +69,33 @@ def _fresh_modules():
             del sys.modules[mod]
 
 
+def _text_only_main_caps(*_args, **_kwargs):
+    """Report the main model as text-only, without asking models.dev.
+
+    The scenarios below are about the *routing decision* taken once the main
+    provider is known to be text-only — not about what the models.dev
+    catalogue happens to say. Letting the real lookup run made them depend on
+    a third-party host being reachable, and on it continuing to carry an entry
+    for whichever model id the config names.
+
+    Offline (air-gapped CI, an offline laptop, a sandbox), ``fetch_models_dev``
+    returns ``{}``, every capability lookup answers ``None``, and
+    ``_lookup_supports_vision`` takes its deliberate permissive
+    unknown-capability branch — the one ``test_unknown_capability_does_not_block``
+    exists to protect. Vision is then judged available and these assertions
+    invert, reporting a routing bug that is not there.
+
+    So the capability is supplied directly. ``agent.image_routing`` imports
+    ``get_model_capabilities`` lazily inside ``_lookup_supports_vision``, so
+    patching the attribute on ``agent.models_dev`` survives ``_fresh_modules``.
+    This is the same approach ``tests/agent/test_image_routing.py`` already
+    takes for the same lookup.
+    """
+    from agent.models_dev import ModelCapabilities
+
+    return ModelCapabilities(supports_vision=False)
+
+
 # ---------------------------------------------------------------------------
 # Fix 1: provider=openai → custom + api.openai.com/v1
 # ---------------------------------------------------------------------------
@@ -157,8 +184,11 @@ model:
         monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-test")
         _fresh_modules()
 
+        from unittest.mock import patch
+
         from agent.auxiliary_client import resolve_vision_provider_client
-        provider, client, _model = resolve_vision_provider_client(provider="auto")
+        with patch("agent.models_dev.get_model_capabilities", _text_only_main_caps):
+            provider, client, _model = resolve_vision_provider_client(provider="auto")
         assert client is None, (
             f"Vision auto-detect must skip text-only main {provider!r} when "
             "no vision-capable aggregator is available, not return a client "
@@ -245,8 +275,11 @@ model:
         monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-test")
         _fresh_modules()
 
+        from unittest.mock import patch
+
         from tools.vision_tools import check_vision_requirements
-        assert check_vision_requirements() is False
+        with patch("agent.models_dev.get_model_capabilities", _text_only_main_caps):
+            assert check_vision_requirements() is False
 
     def test_browser_vision_requires_both_browser_and_vision(self, isolated_home, monkeypatch):
         """``browser_vision`` must not be advertised when vision is unavailable."""
@@ -262,7 +295,8 @@ model:
 
         import tools.browser_tool
         # Force the browser side to True so we exercise the vision-gating part.
-        with patch.object(tools.browser_tool, "check_browser_requirements", return_value=True):
+        with patch.object(tools.browser_tool, "check_browser_requirements", return_value=True), \
+             patch("agent.models_dev.get_model_capabilities", _text_only_main_caps):
             assert tools.browser_tool.check_browser_vision_requirements() is False
 
     def test_browser_vision_false_when_browser_missing(self, isolated_home, monkeypatch):

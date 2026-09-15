@@ -48,7 +48,22 @@ def match_tree(tmp_path):
 
 @pytest.fixture
 def partial_error_tree(tmp_path):
-    """A tree with matches plus one unreadable file (forces exit 2 + matches)."""
+    """A tree with matches plus one unreadable file (forces exit 2 + matches).
+
+    The premise is checked rather than assumed. ``chmod 000`` does not deny
+    anything to a process running as root, so under root (a container, a
+    Docker or LXC image, CI running as root) ``locked.txt`` stays readable:
+    rg/grep exit 0 with no diagnostic, and the three tests using this fixture
+    are no longer exercising the partial-error path at all. Two then pass
+    vacuously and ``test_files_only_excludes_diagnostics`` fails, reporting a
+    guard bug that is not there — the "leaked diagnostic" it names is just
+    locked.txt matching normally.
+
+    So if the lock does not take, skip rather than assert against a scenario
+    that was never built. This is a precondition, not a quarantine: wherever
+    file permissions are enforced — every normal developer machine and any CI
+    not running as root — these run exactly as before.
+    """
     for i in range(4):
         (tmp_path / f"f{i}.txt").write_text(f"needle line {i}\n")
     sub = tmp_path / "sub"
@@ -56,6 +71,18 @@ def partial_error_tree(tmp_path):
     locked = sub / "locked.txt"
     locked.write_text("needle in locked\n")
     os.chmod(locked, 0o000)
+
+    try:
+        locked.read_text()
+    except OSError:
+        pass  # the lock took — this is the scenario we want
+    else:
+        os.chmod(locked, 0o755)
+        pytest.skip(
+            "chmod 000 does not deny this process (running as uid "
+            f"{os.geteuid()}), so the unreadable-file scenario cannot be built"
+        )
+
     yield tmp_path
     os.chmod(locked, 0o755)  # let pytest clean up tmp_path
 
